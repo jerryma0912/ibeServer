@@ -36,7 +36,7 @@ bool handle_equipReg(string url, string body, mg_connection *c, OnRspCallback rs
         //2 查找对应注册的设备
         map<string,EquipEntity>::iterator sendEquip = equipMap.find(paramEquipId->second);
         if (sendEquip != equipMap.end())
-            throw "\"This Equipment have been resistered\"";
+            throw "\"This Equipment is registered\"";
         //3 注册设备
         cout<<"/2/---- Get Private Key "<<endl;
         EquipEntity equip = EquipEntity(paramEquipId->second,&p);
@@ -61,7 +61,7 @@ bool handle_equipReg(string url, string body, mg_connection *c, OnRspCallback rs
         cout<<"/---- ERR: "<<info<<" ---- "<<endl;
         rsp_callback(c, info);
     }
-    cout << "==============  END  ==============" << endl;
+    cout << "==============  END  ==============" << endl<<endl;
     return true;
 }
 
@@ -84,10 +84,10 @@ bool handle_msgEncrypt(string url, string body, mg_connection *c, OnRspCallback 
         //2 查找对应注册的设备
         map<string,EquipEntity>::iterator sendEquip = equipMap.find(paramEquipId->second);
         if (sendEquip == equipMap.end())
-            throw "\"This Equipment have not resister\"";
+            throw "\"This Equipment is not registered\"";
         map<string,EquipEntity>::iterator recvEquip = equipMap.find(paramRecvEquip->second);
         if (recvEquip == equipMap.end())
-            throw "\"Receive Equipment have not resister\"";
+            throw "\"Receive Equipment is not registered\"";
         //3 解析信息合法性
         string message = paramMsg->second;
         if(message=="")
@@ -127,7 +127,7 @@ bool handle_msgEncrypt(string url, string body, mg_connection *c, OnRspCallback 
         rsp_callback(c, info);
     }
     
-    cout << "==============  END  ==============" << endl;
+    cout << "==============  END  ==============" << endl<<endl;
     return true;
 }
 
@@ -150,7 +150,7 @@ bool handle_msgDecrypt(string url, string body, mg_connection *c, OnRspCallback 
         //2 查找对应注册的设备
         map<string,EquipEntity>::iterator equip = equipMap.find(paramEquipId->second);
         if (equip == equipMap.end())
-            throw "\"This Equipment have not resister\"";
+            throw "\"This Equipment is not registered\"";
         //3 解析内容
         cout << "/2/---- U/V parse "<<endl;
         element_t U;
@@ -180,7 +180,42 @@ bool handle_msgDecrypt(string url, string body, mg_connection *c, OnRspCallback 
         cout<<"/---- ERR: "<<info<<" ---- "<<endl;
         rsp_callback(c, info);
     }
-    cout << "==============  END  ==============" << endl;
+    cout << "==============  END  ==============" << endl<<endl;
+    return true;
+}
+
+bool handle_equipLogout(string url, string body, mg_connection *c, OnRspCallback rsp_callback){
+    cout << "==========handle equipLogout==========" << endl;
+    try{
+        //1 解析参数
+        cout << "/1/---- Param Parse " << endl;
+        map<string,string> b = Utils::parsePostBody(body);
+        map<string,string>::iterator paramEquipId = b.find("EquipId");
+        if(paramEquipId == b.end())
+            throw "\"No EquipId param error\"";
+        //2 查找对应注册的设备
+        map<string,EquipEntity>::iterator sendEquip = equipMap.find(paramEquipId->second);
+        if (sendEquip == equipMap.end())
+            throw "\"This Equipment is not registered\"";
+        //3 撤销设备
+        cout<<"/2/---- Log out Equipment "<<endl;
+        equipMap.erase(sendEquip);
+        //4 返回值
+        string result;
+        result +="\"";
+        result += "logout Successful";
+        result +="\"";
+        rsp_callback(c, result.c_str());
+    }
+    catch(exception ex){
+        cout<<"/---- ERR: equip Logout process err ---- "<<endl;
+        rsp_callback(c, "\"equip Logout process err\"");
+    }
+    catch(const char* info){
+        cout<<"/---- ERR: "<<info<<" ---- "<<endl;
+        rsp_callback(c, info);
+    }
+    cout << "==============  END  ==============" << endl<<endl;
     return true;
 }
 
@@ -204,5 +239,6 @@ int main(int argc, const char * argv[]) {
     http_server->AddHandler("/api/msgEncrypt", handle_msgEncrypt);
     http_server->AddHandler("/api/msgDecrypt", handle_msgDecrypt);
     http_server->AddHandler("/api/equipReg", handle_equipReg);
+    http_server->AddHandler("/api/equipLogout", handle_equipLogout);
     http_server->Start();
 }

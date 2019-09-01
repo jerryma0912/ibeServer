@@ -157,7 +157,7 @@ void EquipEntity::string2Mpz(string s,mpz_t *m){
     int decoderealLen = base64_decode(s.c_str(), s.length(),decode_out);
     //cout<<" << V byte[] Len (-'\\0')："<<decoderealLen<<" >>"<<endl;
     //3 byte数组 -> mpz
-    mympz_inp_raw(m,decode_out,strlen((char*)decode_out));
+    mympz_inp_raw(m,decode_out,decoderealLen);
 }
 
 string EquipEntity::getPriKey(){
